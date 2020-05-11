@@ -1,0 +1,22 @@
+{
+  "name": "twitter-bot",
+  "version": "1.0.0",
+  "description": "twitter bot that automatically enters giveaways",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TuOfTimes/twitter-bot.git"
+  },
+  "author": "Edward Tu",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/TuOfTimes/twitter-bot/issues"
+  },
+  "homepage": "https://github.com/TuOfTimes/twitter-bot#readme",
+  "dependencies": {
+    "twitter": "^1.7.1"
+  }
+}
