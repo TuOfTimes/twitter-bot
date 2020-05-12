@@ -1,4 +1,4 @@
-console.log("Twitter Giveaway Bot is starting...");
+console.log("Twitter Giveaway Bot is starting...\n");
 
 var Twitter = require("twitter");
 var config = require("./config.js");
@@ -27,12 +27,15 @@ function getTweets(tweetHandler) {
                 if (
                     data.statuses[i].in_reply_to_status_id_str == null &&
                     !data.statuses[i].text.startsWith("RT @") &&
-                    !data.statuses[i].retweeted
-                    // !data.statuses[i].user.following
+                    !data.statuses[i].retweeted &&
+                    !data.statuses[i].text.includes("gay") &&
+                    !data.statuses[i].text.includes("nsfw") &&
+                    !data.statuses[i].text.includes("kpop") &&
+                    !data.statuses[i].text.includes("sugar daddy")
                 ) {
-                    console.log(data.statuses[i]);
+                    // console.log(data.statuses[i]);
                     count++;
-                    // tweetHandler(data.statuses[i]);
+                    tweetHandler(data.statuses[i]);
                 }
             }
 
@@ -40,7 +43,7 @@ function getTweets(tweetHandler) {
                 params.since_id = data.search_metadata.max_id_str;
             }
 
-            console.log(`Entered ${count} giveaways`);
+            console.log(`Entered ${count} giveaway(s)`);
         })
         .catch((err) => {
             console.log(err);
@@ -111,4 +114,9 @@ function enterGiveaway(tweet) {
 }
 
 getTweets(enterGiveaway);
-setInterval(() => getTweets(enterGiveaway), 1000 * 60 * 2);
+
+setInterval(() => {
+    console.log(`New since_id is ${params.since_id}`);
+    getTweets(enterGiveaway);
+    console.log("\n");
+}, 1000 * 60 * 6);
