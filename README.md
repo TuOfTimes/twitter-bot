@@ -43,3 +43,20 @@ Since we are using the free version of the Twitter API, there are limits to the 
 | GET          | search/tweets      | 180                           | 15 min     |
 
 Assuming that each giveaway entry requires a favorite, follow, retweet, and a comment, then that equates to hitting `statuses/*` twice, `favorites/create` once, and `friendships/create` once per entry. Thus we are limited to 400 entries per 24 hours, as `friendships/create` is the rate-limiting endpoint. Based on these numbers, I decided to have the bot attempt to enter 100 giveaways every 6 hours.
+
+## Challenges
+
+The first time I ran my bot I started it around midnight and set it to retrieve 100 tweets every minute. The bot operated as expected for 105 minutes and made 105 GET requests, successfully retrieving 10400 unique tweets and interacting with 57 of those tweets. The 104th GET request resulted in the following error:
+
+    Error: getaddrinfo ENOTFOUND api.twitter.com at GetAddrInfoReqWrap.onlookup [as oncomplete](dns.js:60:26) { errno: 'ENOTFOUND', code: 'ENOTFOUND', syscall: 'getaddrinfo', hostname: 'api.twitter.com' }
+
+On the 106th and subsequent GET requests the bot started receiving the following error:
+
+    [ { code: 32, message: 'Could not authenticate you.' } ]
+
+Upon logging in to my Twitter account on the computer I was informed that my account had been suspended. In the future I will have to tweek the rate at which requests are made to avoid having my account suspended.
+
+## To Do
+
+-   [ ] Add logging to track messages and errors
+-   [ ] Track data for visualization
