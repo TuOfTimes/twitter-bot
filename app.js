@@ -1,119 +1,114 @@
+console.log("Twitter Giveaway Bot is starting...");
+
 var Twitter = require("twitter");
 var config = require("./config.js");
 
 var T = new Twitter(config);
 
 var params = {
-    q: "#giveawayalert",
+    q: "(giveaway OR win OR competition) (retweet OR RT)",
     count: 100,
-    result_type: "mixed",
+    result_type: "recent",
     lang: "en",
 };
 
-/*
-    GET search/tweets rate limit: 180 per 15 min
-    POST statuses/* rate limit: 300 per 3 hours
+function getTweets(tweetHandler) {
+    var count = 0;
+    T.get("search/tweets", params)
+        .then((data) => {
+            console.log(`Query returned ${data.statuses.length} tweets`);
 
-    Tweets can be viewed by their 'id_str' by visiting 'twitter.com/anyuser/status/{id_str}'
-
-    Giveaway post are not responses - ignore tweet if it is a response (ie. 'in_reply_to_status_id_str') is not null
-
-    If tweet starts with 'RT @{name}:' then ignore as well
-    Assuming each giveaway requires 3 interactions (favorite, retweet, follow - called friendship in the API) we can do 16 per hour
-*/
-
-T.get("search/tweets", params, function (err, data, response) {
-    if (!err) {
-        console.log(`Query returned ${data.statuses.length} tweets`);
-        var count = 0;
-        for (let i = 0; i < data.statuses.length; i++) {
-            if (count == 100) {
-                break;
-            }
-
-            // interact with tweet if it is actually a giveaway
-            if (
-                data.statuses[i].in_reply_to_status_id_str == null &&
-                !data.statuses[i].text.startsWith("RT @") &&
-                !data.statuses[i].retweeted
-            ) {
-                count++;
-
-                // favorite
-                T.post(
-                    "favorites/create",
-                    { id: data.statuses[i].id_str },
-                    function (err, response) {
-                        if (err) {
-                            console.log(err[0].message);
-                        } else {
-                            console.log(
-                                "Favorited: ",
-                                `https://twitter.com/anyuser/status/${response.id_str}`
-                            );
-                        }
-                    }
-                );
-
-                // retweet
-                T.post("statuses/retweet/" + data.statuses[i].id_str, function (
-                    err,
-                    tweet,
-                    response
+            for (let i = 0; i < data.statuses.length; i++) {
+                if (count == 20) {
+                    params.since_id = data.statuses[i].id_str;
+                    break;
+                }
+                // interact with tweet if it is actually a giveaway
+                if (
+                    data.statuses[i].in_reply_to_status_id_str == null &&
+                    !data.statuses[i].text.startsWith("RT @") &&
+                    !data.statuses[i].retweeted
+                    // !data.statuses[i].user.following
                 ) {
-                    if (err) {
-                        console.log(err[0].message);
-                    } else {
-                        console.log(
-                            "Retweeted: ",
-                            `https://twitter.com/anyuser/status/${response.id_str}`
-                        );
-                    }
-                });
-
-                // follow
-                T.post(
-                    "friendships/create",
-                    {
-                        screen_name: data.statuses[i].user.screen_name,
-                        user_id: data.statuses[i].user.id_str,
-                        follow: true,
-                    },
-                    function (err, response) {
-                        if (err) {
-                            console.log(err[0].message);
-                        } else {
-                            console.log(
-                                "Followed: ",
-                                `${response.screen_name}`
-                            );
-                        }
-                    }
-                );
-
-                // comment
-                T.post(
-                    "statuses/update",
-                    {
-                        status: "@GiveawayBot14 Check this out",
-                        in_reply_to_status_id_str: data.statuses[i].id_str,
-                        auto_populate_reply_metadata: true,
-                    },
-                    function (err, tweet, response) {
-                        if (err) {
-                            console.log(err[0].message);
-                        } else {
-                            console.log(
-                                "Commented: ",
-                                `https://twitter.com/anyuser/status/${response.id_str}`
-                            );
-                        }
-                    }
-                );
+                    console.log(data.statuses[i]);
+                    count++;
+                    // tweetHandler(data.statuses[i]);
+                }
             }
-        }
-        console.log(count);
-    } else {
-        console.log(err);
-    }
-});
+
+            if (count != 20) {
+                params.since_id = data.search_metadata.max_id_str;
+            }
+
+            console.log(`Entered ${count} giveaways`);
+        })
+        .catch((err) => {
+            console.log(err);
+        });
+}
+
+function likeTweet(tweet) {
+    T.post("favorites/create", { id: tweet.id_str })
+        .then((response) => {
+            console.log(
+                "Favorited: ",
+                `https://twitter.com/anyuser/status/${response.id_str}`
+            );
+        })
+        .catch((err) => {
+            console.log(err[0].message);
+        });
+}
+
+function retweet(tweet) {
+    T.post("statuses/retweet/" + tweet.id_str, {})
+        .then((response) => {
+            console.log(
+                "Retweeted: ",
+                `https://twitter.com/anyuser/status/${response.id_str}`
+            );
+        })
+        .catch((err) => {
+            console.log(err[0].message);
+        });
+}
+
+function followTweeter(tweet) {
+    T.post("friendships/create", {
+        screen_name: tweet.user.screen_name,
+        user_id: tweet.user.id_str,
+        follow: true,
+    })
+        .then((response) => {
+            console.log("Followed: ", `@${response.screen_name}`);
+        })
+        .catch((err) => {
+            console.log(err[0].message);
+        });
+}
+
+function tagFriend(tweet) {
+    T.post("statuses/update", {
+        status: "@GiveawayBot14 Check this out",
+        in_reply_to_status_id_str: tweet.id_str,
+        auto_populate_reply_metadata: true,
+    })
+        .then((response) => {
+            console.log(
+                "Commented: ",
+                `https://twitter.com/anyuser/status/${response.id_str}`
+            );
+        })
+        .catch((err) => {
+            console.log(err[0].message);
+        });
+}
+
+function enterGiveaway(tweet) {
+    likeTweet(tweet);
+    followTweeter(tweet);
+    retweet(tweet);
+}
+
+getTweets(enterGiveaway);
+setInterval(() => getTweets(enterGiveaway), 1000 * 60 * 2);
