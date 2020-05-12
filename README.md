@@ -8,7 +8,7 @@ This bot searches for giveaways being shared on Twitter and interacts with them.
 
 If we assume that there are more giveaways posted every day than the number of interactions allowed by the Twitter API, then this is a numbers game. We don't need to identify every single giveaway, we just need to identify enough giveaways to maximize our participation. Thus we are more concerned with false positives than false negatives.
 
-To identify giveaways, i search used `search/tweets` endpoint in the Twitter API to find tweets that could be giveaways. The keywords I used were `#giveaway`, `#competition`, `#win`, etc.
+To identify giveaways, I used the `search/tweets` endpoint in the Twitter API to find tweets that could be giveaways. The query I used was `(giveaway OR win) (retweet OR RT)`. To further optimize the process, I included a `since_id` value in my search to minimize redundant tweets. Each tweet is assigned an `id`, which is a number used to uniquely identify tweets, with larger numbers indicating more recent tweets. When searching tweets, the `search_metadata` that is returned contains a `max_id` field, which indicates the most recent tweet that was returned. I use this as the `since_id` parameter of my next search.
 
 The results included many tweets that were in response to giveaways (ex. someone was retweeting to participate in a giveaway) or were links to external giveaways. I used simple regex analysis to filter out these results and maximize the number of meaningful interactions.
 
