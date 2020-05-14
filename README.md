@@ -60,3 +60,11 @@ Upon logging in to my Twitter account on the computer I was informed that my acc
 
 -   [ ] Add logging to track messages and errors
 -   [ ] Track data for visualization
+
+## Improvements
+
+-   [ ] Search tweets and interact with tweets separately
+-   [ ] Analyze text for giveaway entry instructions and perform each action separately (create keywords for each action to match)
+-   [ ] Create a blacklist of users or screen names to ignore (ex. Bot Spotting)
+-   [ ] Don't interact with users under a certain number of followers (say 50 followers)
+-   [ ] Ignore tweets that quote other tweets
