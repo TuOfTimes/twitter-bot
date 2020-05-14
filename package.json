@@ -17,6 +17,7 @@
     },
     "homepage": "https://github.com/TuOfTimes/twitter-bot#readme",
     "dependencies": {
+        "collections": "^5.1.11",
         "twitter": "^1.7.1"
     }
 }
