@@ -1,4 +1,11 @@
 .prettierrc.json
+
 node_modules
-config.js
-streams.js
+config.json
+
+*.txt
+*.csv
+
+unfollow.js
+unretweet.js
+unlike.js
