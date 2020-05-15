@@ -75,7 +75,8 @@ function isGiveaway(tweet) {
         tweet.is_quote_status ||
         tweet.in_reply_to_status_id_str != null ||
         tweet.retweeted_status != null ||
-        tweet.entities.user_mentions.length > config.max_user_mentions
+        tweet.entities.user_mentions.length > config.max_user_mentions ||
+        Date.now() - Date.parse(tweet.created_at) > 604800000
     ) {
         return false;
     }
