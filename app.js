@@ -35,24 +35,20 @@ function getTweets() {
             console.log(`Query returned ${data.statuses.length} tweets`);
 
             for (let i = 0; i < data.statuses.length; i++) {
+                var tweet;
                 if (
                     data.statuses[i].retweeted_status &&
-                    isGiveaway(data.statuses[i].retweeted_status) &&
-                    !tweets.has(data.statuses[i].retweeted_status)
+                    isGiveaway(data.statuses[i].retweeted_status)
                 ) {
+                    tweet = data.statuses[i].retweeted_status;
+                } else if (isGiveaway(data.statuses[i])) {
+                    tweet = data.statuses[i];
+                }
+
+                if (tweet && !tweets.has(tweet)) {
                     count++;
-                    tweets.push(data.statuses[i].retweeted_status);
-                    // recordData(
-                    //     "tweets.txt",
-                    //     data.statuses[i].retweeted_status.text + "\n---\n"
-                    // );
-                } else if (
-                    isGiveaway(data.statuses[i]) &&
-                    !tweets.has(data.statuses[i])
-                ) {
-                    count++;
-                    tweets.push(data.statuses[i]);
-                    // recordData("tweets.txt", data.statuses[i].text + "\n---\n");
+                    tweets.push(tweet);
+                    recordData("tweets.txt", tweet.text + "\n---\n");
                 }
             }
 
@@ -78,7 +74,8 @@ function isGiveaway(tweet) {
         tweet.retweeted ||
         tweet.is_quote_status ||
         tweet.in_reply_to_status_id_str != null ||
-        tweet.retweeted_status != null
+        tweet.retweeted_status != null ||
+        tweet.entities.user_mentions.length > config.max_user_mentions
     ) {
         return false;
     }
@@ -147,7 +144,7 @@ function followTweeter(tweet) {
 
 function tagFriend(tweet) {
     T.post("statuses/update", {
-        status: "@GiveawayBot14 Check this out",
+        status: "@BendenTooley Check this out",
         in_reply_to_status_id_str: tweet.id_str,
         auto_populate_reply_metadata: true,
     })
@@ -162,10 +159,48 @@ function tagFriend(tweet) {
         });
 }
 
-function enterGiveaway(tweet) {
-    likeTweet(tweet);
-    followTweeter(tweet);
-    retweet(tweet);
+function matchesLike(tweetText) {
+    for (let j = 0; j < config.favorite_keywords.length; j++) {
+        if (tweetText.includes(config.favorite_keywords[j])) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function matchesFollow(tweetText) {
+    for (let j = 0; j < config.follow_keywords.length; j++) {
+        if (tweetText.includes(config.follow_keywords[j])) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function matchesComment(tweetText) {
+    for (let j = 0; j < config.comment_keywords.length; j++) {
+        if (tweetText.includes(config.comment_keywords[j])) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function enterGiveaway() {
+    if (tweets.length > 0) {
+        var tweet = tweets.shift();
+        var tweetText = tweet.text.toLowerCase();
+        retweet(tweet);
+        if (matchesLike(tweetText)) {
+            likeTweet(tweet);
+        }
+        if (matchesFollow(tweetText)) {
+            followTweeter(tweet);
+        }
+        if (matchesComment(tweetText)) {
+            tagFriend(tweet);
+        }
+    }
 }
 
 function recordData(file, data) {
@@ -177,13 +212,12 @@ function recordData(file, data) {
 }
 
 getTweets();
-var count = 0;
-var gettingTweets = setInterval(() => {
+setInterval(() => {
     console.log(`New since_id is ${params.since_id}`);
     getTweets();
     console.log("\n");
-
-    if (++count == 2) {
-        clearInterval(gettingTweets);
-    }
 }, 1000 * 15);
+
+setInterval(() => {
+    enterGiveaway();
+}, 1000 * 60 * 4);
