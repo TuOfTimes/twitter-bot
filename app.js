@@ -76,7 +76,7 @@ function isGiveaway(tweet) {
         tweet.in_reply_to_status_id_str != null ||
         tweet.retweeted_status != null ||
         tweet.entities.user_mentions.length > config.max_user_mentions ||
-        Date.now() - Date.parse(tweet.created_at) > 604800000
+        Date.now() - Date.parse(tweet.created_at) > 86400000 //604800000
     ) {
         return false;
     }
@@ -221,4 +221,4 @@ setInterval(() => {
 
 setInterval(() => {
     enterGiveaway();
-}, 1000 * 60 * 4);
+}, 1000 * 60 * 3);
