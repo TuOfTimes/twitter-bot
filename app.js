@@ -1,5 +1,6 @@
 console.log("Twitter Giveaway Bot is starting...\n");
 
+// require
 var Twitter = require("twitter");
 var config = require("./config.json");
 var SortedSet = require("collections/sorted-set");
@@ -7,6 +8,7 @@ var fs = require("fs");
 
 var T = new Twitter(config.credentials);
 
+// global vars
 var params = {
     q: config.search_query,
     count: 100,
@@ -14,13 +16,20 @@ var params = {
     lang: "en",
 };
 
+var retweetRegex = getRegexFromList(config.rewteet_keywords);
+var favoriteRegex = getRegexFromList(config.favorite_keywords);
+var commentRegex = getRegexFromList(config.comment_keywords);
+var followRegex = getRegexFromList(config.follow_keywords);
+var ignoreKeywordsRegex = getRegexFromList(config.ignore_keywords);
+var ignoreScreenNamesRegex = getRegexFromList(config.ignore_screen_names);
+
 var tweets = new SortedSet(
     [],
     (a, b) => a.id_str == b.id_str,
     (a, b) => {
-        if (a.id_str > b.id_str) {
+        if (a.id_str < b.id_str) {
             return 1;
-        } else if (a.id_str < b.id_str) {
+        } else if (a.id_str > b.id_str) {
             return -1;
         }
         return 0;
@@ -28,12 +37,11 @@ var tweets = new SortedSet(
 );
 var following = []; // array of user_id strings, max 2000 following at a time
 
+// functions
 function getTweets() {
     var count = 0;
     T.get("search/tweets", params)
         .then((data) => {
-            console.log(`Query returned ${data.statuses.length} tweets`);
-
             for (let i = 0; i < data.statuses.length; i++) {
                 var tweet;
                 if (
@@ -54,8 +62,12 @@ function getTweets() {
 
             params.since_id = data.search_metadata.max_id_str;
 
-            console.log(tweets.length);
-            console.log(`Found ${count} giveaway(s)`);
+            console.log(
+                `[Tweets] Found ${count} giveaways from ${data.statuses.length} searched tweets`
+            );
+            console.log(
+                `[Tweets] Currently have ${tweets.length} stored giveaways`
+            );
 
             recordData(
                 "getTweets.csv",
@@ -67,6 +79,20 @@ function getTweets() {
         });
 }
 
+function getRegexFromList(list) {
+    var matchList = [];
+    matchList.push("\\b", "(");
+    for (let i = 0; i < list.length; i++) {
+        matchList.push(list[i]);
+        if (i != list.length - 1) {
+            matchList.push("|");
+        }
+    }
+    matchList.push("\\b", ")");
+
+    return new RegExp(matchList.join(""), "i");
+}
+
 function isGiveaway(tweet) {
     // filter tweets
     if (
@@ -76,30 +102,23 @@ function isGiveaway(tweet) {
         tweet.in_reply_to_status_id_str != null ||
         tweet.retweeted_status != null ||
         tweet.entities.user_mentions.length > config.max_user_mentions ||
-        Date.now() - Date.parse(tweet.created_at) > 86400000 //604800000
+        Date.now() - Date.parse(tweet.created_at) > 86400000
     ) {
         return false;
     }
 
-    var tweetText = tweet.text.toLowerCase();
-    for (let j = 0; j < config.ignore_keywords.length; j++) {
-        if (tweetText.includes(config.ignore_keywords[j])) {
-            return false;
-        }
+    if (ignoreKeywordsRegex.test(tweet.text)) {
+        return false;
     }
 
-    var userScreenName = tweet.user.screen_name.toLowerCase();
-    for (let j = 0; j < config.ignore_screen_names.length; j++) {
-        if (userScreenName == config.ignore_screen_names[j]) {
-            return false;
-        }
+    if (ignoreScreenNamesRegex.test(tweet.user.screen_name)) {
+        return false;
     }
 
-    for (let j = 0; j < config.rewteet_keywords.length; j++) {
-        if (tweetText.includes(config.rewteet_keywords[j])) {
-            return true;
-        }
+    if (retweetRegex.test(tweet.text)) {
+        return true;
     }
+
     return false;
 }
 
@@ -107,7 +126,7 @@ function likeTweet(tweet) {
     T.post("favorites/create", { id: tweet.id_str })
         .then((response) => {
             console.log(
-                "Favorited: ",
+                "[Giveaway] Favorited: ",
                 `https://twitter.com/anyuser/status/${response.id_str}`
             );
         })
@@ -120,7 +139,7 @@ function retweet(tweet) {
     T.post("statuses/retweet/" + tweet.id_str, {})
         .then((response) => {
             console.log(
-                "Retweeted: ",
+                "[Giveaway] Retweeted: ",
                 `https://twitter.com/anyuser/status/${response.id_str}`
             );
         })
@@ -136,7 +155,7 @@ function followTweeter(tweet) {
         follow: true,
     })
         .then((response) => {
-            console.log("Followed: ", `@${response.screen_name}`);
+            console.log("[Giveaway] Followed: ", `@${response.screen_name}`);
         })
         .catch((err) => {
             console.log(err[0].message);
@@ -145,13 +164,13 @@ function followTweeter(tweet) {
 
 function tagFriend(tweet) {
     T.post("statuses/update", {
-        status: "@BendenTooley Check this out",
+        status: "@BendenTooley @TuOftimes @TastyUnderwear",
         in_reply_to_status_id_str: tweet.id_str,
         auto_populate_reply_metadata: true,
     })
         .then((response) => {
             console.log(
-                "Commented: ",
+                "[Giveaway] Commented: ",
                 `https://twitter.com/anyuser/status/${response.id_str}`
             );
         })
@@ -160,45 +179,29 @@ function tagFriend(tweet) {
         });
 }
 
-function matchesLike(tweetText) {
-    for (let j = 0; j < config.favorite_keywords.length; j++) {
-        if (tweetText.includes(config.favorite_keywords[j])) {
-            return true;
-        }
-    }
-    return false;
-}
-
-function matchesFollow(tweetText) {
-    for (let j = 0; j < config.follow_keywords.length; j++) {
-        if (tweetText.includes(config.follow_keywords[j])) {
-            return true;
-        }
-    }
-    return false;
-}
-
-function matchesComment(tweetText) {
-    for (let j = 0; j < config.comment_keywords.length; j++) {
-        if (tweetText.includes(config.comment_keywords[j])) {
-            return true;
-        }
-    }
-    return false;
-}
-
 function enterGiveaway() {
-    if (tweets.length > 0) {
-        var tweet = tweets.shift();
-        var tweetText = tweet.text.toLowerCase();
+    var tweet;
+    while (tweets.length > 0) {
+        var temp = tweets.shift();
+        if (Date.now() - Date.parse(temp.created_at) < 86400000) {
+            tweet = temp;
+            break;
+        }
+    }
+
+    if (tweet) {
+        console.log(
+            `[Giveaway] Entering giveaway at http://twitter.com/anyuser/status/` +
+                tweet.id_str
+        );
         retweet(tweet);
-        if (matchesLike(tweetText)) {
+        if (favoriteRegex.test(tweet.text)) {
             likeTweet(tweet);
         }
-        if (matchesFollow(tweetText)) {
+        if (followRegex.test(tweet.text)) {
             followTweeter(tweet);
         }
-        if (matchesComment(tweetText)) {
+        if (commentRegex.test(tweet.text)) {
             tagFriend(tweet);
         }
     }
@@ -214,9 +217,7 @@ function recordData(file, data) {
 
 getTweets();
 setInterval(() => {
-    console.log(`New since_id is ${params.since_id}`);
     getTweets();
-    console.log("\n");
 }, 1000 * 15);
 
 setInterval(() => {
