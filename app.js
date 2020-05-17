@@ -131,7 +131,7 @@ function likeTweet(tweet) {
             );
         })
         .catch((err) => {
-            console.log(err[0].message);
+            console.log("[Giveaway] Favorite: ", err[0].message);
         });
 }
 
@@ -144,7 +144,7 @@ function retweet(tweet) {
             );
         })
         .catch((err) => {
-            console.log(err[0].message);
+            console.log("[Giveaway] Retweet: ", err[0].message);
         });
 }
 
@@ -158,7 +158,7 @@ function followTweeter(tweet) {
             console.log("[Giveaway] Followed: ", `@${response.screen_name}`);
         })
         .catch((err) => {
-            console.log(err[0].message);
+            console.log("[Giveaway] Follow: ", err[0].message);
         });
 }
 
@@ -175,7 +175,7 @@ function tagFriend(tweet) {
             );
         })
         .catch((err) => {
-            console.log(err[0].message);
+            console.log("[Giveaway] Comment: ", err[0].message);
         });
 }
 
