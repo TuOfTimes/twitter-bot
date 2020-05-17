@@ -180,16 +180,8 @@ function tagFriend(tweet) {
 }
 
 function enterGiveaway() {
-    var tweet;
-    while (tweets.length > 0) {
-        var temp = tweets.shift();
-        if (Date.now() - Date.parse(temp.created_at) < 86400000) {
-            tweet = temp;
-            break;
-        }
-    }
-
-    if (tweet) {
+    if (tweets.length > 0) {
+        var tweet = tweets.shift();
         console.log(
             `[Giveaway] Entering giveaway at http://twitter.com/anyuser/status/` +
                 tweet.id_str
