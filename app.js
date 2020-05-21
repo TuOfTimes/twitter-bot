@@ -100,7 +100,6 @@ function isGiveaway(tweet) {
         tweet.is_quote_status ||
         tweet.in_reply_to_status_id_str != null ||
         tweet.retweeted_status != null ||
-        tweet.entities.user_mentions.length > config.max_user_mentions ||
         !tweet.text.includes("$") ||
         Date.now() - Date.parse(tweet.created_at) > 86400000
     ) {
