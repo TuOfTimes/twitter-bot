@@ -27,9 +27,9 @@ var tweets = new SortedSet(
     [],
     (a, b) => a.id_str == b.id_str,
     (a, b) => {
-        if (a.id_str < b.id_str) {
+        if (a.id_str > b.id_str) {
             return 1;
-        } else if (a.id_str > b.id_str) {
+        } else if (a.id_str < b.id_str) {
             return -1;
         }
         return 0;
@@ -44,16 +44,13 @@ function getTweets() {
         .then((data) => {
             for (let i = 0; i < data.statuses.length; i++) {
                 var tweet;
-                if (
-                    data.statuses[i].retweeted_status &&
-                    isGiveaway(data.statuses[i].retweeted_status)
-                ) {
+                if (data.statuses[i].retweeted_status) {
                     tweet = data.statuses[i].retweeted_status;
-                } else if (isGiveaway(data.statuses[i])) {
+                } else {
                     tweet = data.statuses[i];
                 }
 
-                if (tweet && !tweets.has(tweet)) {
+                if (isGiveaway(tweet) && !tweets.has(tweet)) {
                     count++;
                     tweets.push(tweet);
                     recordData("tweets.txt", tweet.text + "\n---\n");
