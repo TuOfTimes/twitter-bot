@@ -16,26 +16,28 @@ var params = {
     lang: "en",
 };
 
+var tweets = new SortedSet(
+    [],
+    (a, b) => a.id_str == b.id_str,
+    (a, b) => {
+        if (a.id_str < b.id_str) {
+            return 1;
+        } else if (a.id_str > b.id_str) {
+            return -1;
+        }
+        return 0;
+    }
+);
+
+var friends = []; // array of user_id strings, max 2000 follows at a time
+
+// regex
 var retweetRegex = getRegexFromList(config.rewteet_keywords);
 var favoriteRegex = getRegexFromList(config.favorite_keywords);
 var commentRegex = getRegexFromList(config.comment_keywords);
 var followRegex = getRegexFromList(config.follow_keywords);
 var ignoreKeywordsRegex = getRegexFromList(config.ignore_keywords);
 var ignoreScreenNamesRegex = getRegexFromList(config.ignore_screen_names);
-
-var tweets = new SortedSet(
-    [],
-    (a, b) => a.id_str == b.id_str,
-    (a, b) => {
-        if (a.id_str > b.id_str) {
-            return 1;
-        } else if (a.id_str < b.id_str) {
-            return -1;
-        }
-        return 0;
-    }
-);
-var following = []; // array of user_id strings, max 2000 following at a time
 
 // functions
 function getTweets() {
@@ -72,7 +74,7 @@ function getTweets() {
             );
         })
         .catch((err) => {
-            console.log(err);
+            console.log("[Tweets] Get: ", err[0].message);
         });
 }
 
@@ -99,6 +101,7 @@ function isGiveaway(tweet) {
         tweet.in_reply_to_status_id_str != null ||
         tweet.retweeted_status != null ||
         tweet.entities.user_mentions.length > config.max_user_mentions ||
+        !tweet.text.includes("$") ||
         Date.now() - Date.parse(tweet.created_at) > 86400000
     ) {
         return false;
@@ -145,24 +148,32 @@ function retweet(tweet) {
         });
 }
 
-function followTweeter(tweet) {
-    T.post("friendships/create", {
-        screen_name: tweet.user.screen_name,
-        user_id: tweet.user.id_str,
-        follow: true,
-    })
-        .then((response) => {
-            console.log("[Giveaway] Followed: ", `@${response.screen_name}`);
+function followTweeter(userID) {
+    if (!friends.includes(userID)) {
+        T.post("friendships/create", {
+            user_id: userID,
+            follow: true,
         })
-        .catch((err) => {
-            console.log("[Giveaway] Follow: ", err[0].message);
-        });
+            .then((response) => {
+                console.log(
+                    "[Giveaway] Followed: ",
+                    `@${response.screen_name}`
+                );
+            })
+            .catch((err) => {
+                console.log("[Giveaway] Follow: ", err[0].message);
+            });
+    } else {
+        friends.splice(friends.indexOf(userID), 1);
+        console.log("Already following ", userID);
+    }
+    friends.push(userID);
 }
 
 function tagFriend(tweet) {
     T.post("statuses/update", {
         status: "@BendenTooley @TuOftimes @TastyUnderwear",
-        in_reply_to_status_id_str: tweet.id_str,
+        in_reply_to_status_id: tweet.id_str,
         auto_populate_reply_metadata: true,
     })
         .then((response) => {
@@ -188,7 +199,12 @@ function enterGiveaway() {
             likeTweet(tweet);
         }
         if (followRegex.test(tweet.text)) {
-            followTweeter(tweet);
+            followTweeter(tweet.user.id_str);
+            tweet.entities.user_mentions.forEach((user) => {
+                if (user.id_str != tweet.user.id_str) {
+                    followTweeter(user.id_str);
+                }
+            });
         }
         if (commentRegex.test(tweet.text)) {
             tagFriend(tweet);
@@ -211,4 +227,4 @@ setInterval(() => {
 
 setInterval(() => {
     enterGiveaway();
-}, 1000 * 60 * 3);
+}, 1000 * 60 * 5);
