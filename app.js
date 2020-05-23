@@ -171,7 +171,7 @@ function followTweeter(userID) {
 
 function tagFriend(tweet) {
     T.post("statuses/update", {
-        status: "@BendenTooley @TuOftimes @TastyUnderwear",
+        status: config.status,
         in_reply_to_status_id: tweet.id_str,
         auto_populate_reply_metadata: true,
     })
