@@ -171,7 +171,8 @@ function followTweeter(userID) {
 
 function tagFriend(tweet) {
     T.post("statuses/update", {
-        status: config.status,
+        status:
+            config.statuses[Math.round(Math.random() * config.statuses.length)],
         in_reply_to_status_id: tweet.id_str,
         auto_populate_reply_metadata: true,
     })
