@@ -58,13 +58,17 @@ Upon logging in to my Twitter account on the computer I was informed that my acc
 
 ## To Do
 
--   [ ] Add logging to track messages and errors
--   [ ] Track data for visualization
-
-## Improvements
-
--   [ ] Search tweets and interact with tweets separately
--   [ ] Analyze text for giveaway entry instructions and perform each action separately (create keywords for each action to match)
--   [ ] Create a blacklist of users or screen names to ignore (ex. Bot Spotting)
--   [ ] Don't interact with users under a certain number of followers (say 50 followers)
--   [ ] Ignore tweets that quote other tweets
+-   [x] Track data for visualization
+-   [x] Search tweets and interact with tweets separately
+-   [x] Analyze text for giveaway entry instructions and perform each action separately (create keywords for each action to match)
+-   [x] Create a blacklist of users or screen names to ignore (ex. Bot Spotting)
+-   [x] Don't interact with users under a certain number of followers (say 50 followers)
+-   [x] Ignore tweets that quote other tweets
+-   [x] Use regex to check word matchings
+-   [ ] Retrieve followers and to allow for unfollowing once follower limit is reached
+-   [x] Put a date requirement on tweets (no earlier than 1 week or something)
+-   [ ] Filter out Royale High, Roblox, and Animal Crossing
+-   [ ] Ignore posts with external URLs
+-   [ ] Determine best way to order giveaway tweets
+-   [ ] Fix regex to make sure words are matched properly
+-   [ ] Tweek entity checking (ex. URLs, number of tagged users, hashtags, etc.)
