@@ -74,7 +74,7 @@ function getTweets() {
             );
         })
         .catch((err) => {
-            console.log("[Tweets] Get: ", err[0].message);
+            console.log("[Tweets] Get: ", err);
         });
 }
 
