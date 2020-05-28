@@ -32,12 +32,15 @@ var tweets = new SortedSet(
 var friends = []; // array of user_id strings, max 2000 follows at a time
 
 // regex
-var retweetRegex = getRegexFromList(config.rewteet_keywords);
-var favoriteRegex = getRegexFromList(config.favorite_keywords);
-var commentRegex = getRegexFromList(config.comment_keywords);
-var followRegex = getRegexFromList(config.follow_keywords);
-var ignoreKeywordsRegex = getRegexFromList(config.ignore_keywords);
-var ignoreScreenNamesRegex = getRegexFromList(config.ignore_screen_names);
+var retweetRegex = getRegexFromList(config.rewteet_keywords, true);
+var favoriteRegex = getRegexFromList(config.favorite_keywords, true);
+var commentRegex = getRegexFromList(config.comment_keywords, true);
+var followRegex = getRegexFromList(config.follow_keywords, true);
+var ignoreKeywordsRegex = getRegexFromList(config.ignore_keywords, false);
+var ignoreScreenNamesRegex = getRegexFromList(
+    config.ignore_screen_names,
+    false
+);
 
 // functions
 function getTweets() {
@@ -78,16 +81,25 @@ function getTweets() {
         });
 }
 
-function getRegexFromList(list) {
+function getRegexFromList(list, wholeWordsOnly) {
     var matchList = [];
-    matchList.push("\\b", "(");
+
+    if (wholeWordsOnly) {
+        matchList.push("\\b");
+    }
+    matchList.push("(");
+
     for (let i = 0; i < list.length; i++) {
         matchList.push(list[i]);
         if (i != list.length - 1) {
             matchList.push("|");
         }
     }
-    matchList.push("\\b", ")");
+
+    if (wholeWordsOnly) {
+        matchList.push("\\b");
+    }
+    matchList.push(")");
 
     return new RegExp(matchList.join(""), "i");
 }
