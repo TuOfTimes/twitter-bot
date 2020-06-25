@@ -56,6 +56,8 @@ On the 106th and subsequent GET requests the bot started receiving the following
 
 Upon logging in to my Twitter account on the computer I was informed that my account had been suspended. In the future I will have to tweek the rate at which requests are made to avoid having my account suspended.
 
+Twitter uses `id`, a large integer, to identify tweets or users. Javascript, however, does not support 64 bit integers. This isn't a problem in most situations, since the Twitter API also sends an `id_str`, which is a String version of `id` for languages that don't support 64 bit integers. However, some endpoints of the API transmit information in the form of a list of `id` values. These values only exist as integers, and thus cannot be interpreted JavaScript.
+
 ## To Do
 
 -   [x] Track data for visualization
@@ -67,8 +69,6 @@ Upon logging in to my Twitter account on the computer I was informed that my acc
 -   [x] Use regex to check word matchings
 -   [ ] Retrieve followers and to allow for unfollowing once follower limit is reached
 -   [x] Put a date requirement on tweets (no earlier than 1 week or something)
--   [ ] Filter out Royale High, Roblox, and Animal Crossing
--   [ ] Ignore posts with external URLs
--   [ ] Determine best way to order giveaway tweets
--   [ ] Fix regex to make sure words are matched properly
+-   [x] Fix regex to make sure words are matched properly
 -   [ ] Tweek entity checking (ex. URLs, number of tagged users, hashtags, etc.)
+-   [ ] Retweeting seems to be failing, not sure why

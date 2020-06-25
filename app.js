@@ -43,6 +43,47 @@ var ignoreScreenNamesRegex = getRegexFromList(
 );
 
 // functions
+function getFriends(cursor) {
+    var friends_param = {
+        screen_name: config.credentials.screen_name,
+        count: 200,
+    };
+
+    if (cursor) {
+        friends_param.cursor = cursor;
+    }
+
+    return T.get("friends/list", friends_param)
+        .then((results) => {
+            return results;
+        })
+        .catch((err) => {
+            throw err;
+        });
+}
+
+function getAllFriends(cursor) {
+    setTimeout(() => {
+        getFriends(cursor)
+            .then((results) => {
+                friends.push(...results.users);
+                console.log(
+                    `[Friends] Friends list now has ${friends.length} entries`
+                );
+                if (results.next_cursor_str == "0") {
+                    return;
+                } else {
+                    // console.log(results.next_cursor_str);
+                    return getAllFriends(results.next_cursor_str);
+                }
+            })
+            .catch((err) => {
+                console.log(err);
+                return;
+            });
+    }, 1000 * 3);
+}
+
 function getTweets() {
     var count = 0;
     T.get("search/tweets", params)
@@ -159,8 +200,24 @@ function retweet(tweet) {
         });
 }
 
+function unfollowTweeter(userID) {
+    T.post("friendships/destroy", {
+        user_id: userID,
+    })
+        .then((response) => {
+            console.log("[Giveaway] Unfollowed: ", `@${response.screen_name}`);
+        })
+        .catch((err) => {
+            console.log("[Giveaway] Unfsollow: ", err[0].message);
+        });
+}
+
 function followTweeter(userID) {
     if (!friends.includes(userID)) {
+        if (friends.length == 2000) {
+            unfollowTweeter(friends.shift());
+        }
+
         T.post("friendships/create", {
             user_id: userID,
             follow: true,
@@ -176,7 +233,7 @@ function followTweeter(userID) {
             });
     } else {
         friends.splice(friends.indexOf(userID), 1);
-        console.log("Already following ", userID);
+        console.log("[Giveaway] Follow: Already following ", userID);
     }
     friends.push(userID);
 }
@@ -237,6 +294,7 @@ setInterval(() => {
     getTweets();
 }, 1000 * 15);
 
+getAllFriends();
 setInterval(() => {
     enterGiveaway();
-}, 1000 * 60 * 5);
+}, 1000 * 60 * 4);
